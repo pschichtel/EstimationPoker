@@ -2,13 +2,16 @@ package tel.schich.estimationpoker;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -47,9 +50,20 @@ public class Main {
 
     private static final String WEBSOCKET_PATH = "/ws";
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         EventLoopGroup bossGroup = new EpollEventLoopGroup(1);
         EventLoopGroup workerGroup = new EpollEventLoopGroup();
+
+        final Path fileBase;
+        if (args.length == 0) {
+            fileBase = Paths.get("src/main/content");
+            if (!Files.exists(fileBase)) {
+                Files.createDirectories(fileBase);
+            }
+        } else {
+            fileBase = Paths.get(args[0]);
+        }
+
 
         try {
             ServerBootstrap b = new ServerBootstrap();
@@ -62,7 +76,7 @@ public class Main {
                     pipeline.addLast(new HttpObjectAggregator(65536));
                     pipeline.addLast(new WebSocketServerCompressionHandler());
                     pipeline.addLast(new WebSocketServerProtocolHandler(WEBSOCKET_PATH, null, true));
-                    pipeline.addLast(new WebSocketIndexPageHandler(WEBSOCKET_PATH));
+                    pipeline.addLast(new WebSocketIndexPageHandler(fileBase));
                     pipeline.addLast(new WebSocketFrameHandler());
                 }
             });
@@ -78,10 +92,10 @@ public class Main {
     }
 
     private static final class WebSocketIndexPageHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
-        private final String websocketPath;
+        private final Path fileBase;
 
-        public WebSocketIndexPageHandler(String websocketPath) {
-            this.websocketPath = websocketPath;
+        public WebSocketIndexPageHandler(Path fileBase) {
+            this.fileBase = fileBase;
         }
 
         @Override
@@ -103,8 +117,10 @@ public class Main {
                 path = "/index.html";
             }
 
+            System.out.println("Request for: " + path);
 
-            ByteBuf content = getContentFor(path);
+
+            ByteBuf content = getContentFor(fileBase, path);
             // Send the index page
             if (content != null) {
                 FullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK, content);
@@ -115,7 +131,9 @@ public class Main {
                 } else if (path.endsWith(".js")) {
                     contentType = "text/javascript";
                 } else if (path.endsWith(".css")) {
-                    contentType = "text/stylesheet";
+                    contentType = "text/css";
+                } else if (path.endsWith(".svg")) {
+                    contentType = "image/svg+xml";
                 }
 
                 res.headers().set(CONTENT_TYPE, contentType + "; charset=UTF-8");
@@ -127,17 +145,25 @@ public class Main {
             }
         }
 
-        private static ByteBuf getContentFor(String path) throws IOException {
-            try (InputStream contentStream = Main.class.getResourceAsStream("/content" + path)) {
+        private static ByteBuf getContentFor(Path fileBase, String path) throws IOException {
+            if (path.startsWith("/")) {
+                path = path.substring(1);
+            }
+            Path fullPath = fileBase.resolve(path);
+            if (!Files.exists(fullPath)) {
+                return null;
+            }
+            try (FileChannel contentStream = FileChannel.open(fullPath, StandardOpenOption.READ)) {
                 if (contentStream == null) {
                     return null;
                 }
 
                 try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                    byte[] buf = new byte[4096];
+                    ByteBuffer buf = ByteBuffer.allocate(4096);
                     int bytesRead;
                     while ((bytesRead = contentStream.read(buf)) != -1) {
-                        out.write(buf, 0, bytesRead);
+                        out.write(buf.array(), 0, bytesRead);
+                        buf.clear();
                     }
                     return Unpooled.wrappedBuffer(out.toByteArray());
                 }
@@ -175,7 +201,7 @@ public class Main {
     }
 
     private static final class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
-        protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame msg) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame msg) {
             if (msg instanceof TextWebSocketFrame) {
                 String text = ((TextWebSocketFrame) msg).text();
                 System.out.println(text);

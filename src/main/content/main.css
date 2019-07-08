@@ -1,0 +1,41 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: Roboto, "Open Sans", Verdana, Arial, sans-serif;
+}
+
+#card-container {
+    display: flex;
+}
+
+.card {
+    position: relative;
+    font-size: 2em;
+    width: 14em;
+    float: left;
+    z-index: 1;
+}
+.card img.jersey {
+    width: 100%;
+}
+.card span.relative,.card span.absolute {
+    position: absolute;
+    transform: translate(-50%, -50%);
+}
+.card span.relative {
+    top: 50%;
+    left: 50%;
+    font-size: 100%;
+}
+.card span.absolute {
+    bottom: 20%;
+    left: 50%;
+    font-size: 70%;
+}
+.card:hover {
+    box-shadow: 0 0 5px 5px rgba(0,0,0,0.75);
+    background-color: rgb(237, 237, 237);
+    z-index: 2;
+    cursor: pointer;
+}
+
