@@ -6,14 +6,25 @@ html, body {
 
 #card-container {
     display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .card {
     position: relative;
     font-size: 2em;
-    width: 14em;
-    float: left;
+    width: 12em;
     z-index: 1;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin: 1em;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.card.active {
+    background-color: red;
 }
 .card img.jersey {
     width: 100%;

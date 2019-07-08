@@ -52,7 +52,9 @@ function bindPlayerScreen(playerRoot) {
         card.addEventListener('click', e => {
             e.preventDefault();
 
-            alert(`Jersey clicked! Size: ${relative}, Story points: ${absolute}`)
+            card.classList.toggle('active');
+
+            console.log(`Jersey clicked! Size: ${relative}, Story points: ${absolute}`)
         });
 
         return card;
