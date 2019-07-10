@@ -18,7 +18,8 @@ html, body {
     z-index: 1;
     flex-grow: 0;
     flex-shrink: 0;
-    margin: 1em;
+    margin: 0.5em;
+    padding: 0.5em;
     -moz-user-select: none;
     -webkit-user-select: none;
     user-select: none;
@@ -39,7 +40,7 @@ html, body {
     font-size: 100%;
 }
 .card span.absolute {
-    bottom: 20%;
+    bottom: 25%;
     left: 50%;
     font-size: 70%;
 }
@@ -49,4 +50,10 @@ html, body {
     z-index: 2;
     cursor: pointer;
 }
+.card.active:hover {
+    background-color: rgb(255, 94, 0);
+}
 
+.hidden {
+    display: none;
+}
