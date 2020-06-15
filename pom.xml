@@ -56,7 +56,7 @@
         <releaseProfile>release-estimationpoker</releaseProfile>
         <slf4jVersion>1.8.0-beta4</slf4jVersion>
         <javaVersion>1.8</javaVersion>
-        <nettyVersion>4.1.45.Final</nettyVersion>
+        <nettyVersion>4.1.50.Final</nettyVersion>
     </properties>
 
     <dependencies>
